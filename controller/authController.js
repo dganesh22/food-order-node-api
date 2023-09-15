@@ -1,6 +1,9 @@
 const { StatusCodes } = require("http-status-codes")
 const bcrypt  = require('bcryptjs')
 const User = require('../model/userModel')
+const mailConfig = require('../util/mail_config')
+const {regTemplate} = require('../util/template')
+const { createAccessToken } = require('../util/token')
 
 // register user
 const register = async (req,res) => {
@@ -21,6 +24,7 @@ const register = async (req,res) => {
       // encrypt the pass word
       const encPass = await bcrypt.hash(password,10)
 
+      // to save data into db
          let newUser = await User.create({
             name,
             email,
@@ -28,7 +32,12 @@ const register = async (req,res) => {
             password: encPass
          })
 
-       res.status(StatusCodes.OK).json({  msg: "New user Registered succesfully", newUser })
+         // send confirm email
+         let template = regTemplate(name,email)
+         let subject = "User Registration"
+        let emailRes = await mailConfig(email,subject,template)
+
+       res.status(StatusCodes.OK).json({  msg: "New user Registered succesfully", newUser, emailRes })
 
     } catch (err) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
@@ -38,7 +47,23 @@ const register = async (req,res) => {
 // login user
 const login = async (req,res) => {
     try {
-        res.json({ msg: "login"})
+        let { email, password } = req.body
+
+        // user exists or not
+        let extUser = await User.findOne({ email })
+            if(!extUser)
+                return res.status(StatusCodes.NOT_FOUND).json({msg: `${email} id not found`})
+
+            // password verfication
+            let isMatch = await bcrypt.compare(password,extUser.password)
+                if(!isMatch)
+                    return res.status(StatusCodes.NOT_ACCEPTABLE).json({ msg: "Passwords are not matched"})
+
+                // login token
+            const authToken = createAccessToken({ id: extUser._id })
+
+            res.status(StatusCodes.OK).json({ msg: "Login Successful", authToken })
+
     } catch (err) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
