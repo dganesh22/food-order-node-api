@@ -1,9 +1,35 @@
 const { StatusCodes } = require("http-status-codes")
+const bcrypt  = require('bcryptjs')
+const User = require('../model/userModel')
 
 // register user
 const register = async (req,res) => {
     try {
-        res.json({ msg: "register"})
+       const { name, email, mobile, password } = req.body
+        
+       // to validate email
+       const extUser = await User.findOne({ email })
+            if(extUser)
+                return res.status(StatusCodes.BAD_REQUEST).json({ msg: `${email} already exists`})
+        
+            // to validate mobile
+      const extMob = await User.findOne({ mobile })
+            if(extMob)
+                return res.status(StatusCodes.BAD_REQUEST).json({ msg: `${mobile} already exists`})
+
+
+      // encrypt the pass word
+      const encPass = await bcrypt.hash(password,10)
+
+         let newUser = await User.create({
+            name,
+            email,
+            mobile,
+            password: encPass
+         })
+
+       res.status(StatusCodes.OK).json({  msg: "New user Registered succesfully", newUser })
+
     } catch (err) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
