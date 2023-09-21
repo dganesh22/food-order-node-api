@@ -15,10 +15,11 @@ app.use(express.urlencoded({ extended: true }))
 app.use(express.json())
 
 app.use(cors())
-app.use(cookieParser())
+app.use(cookieParser(process.env.API_SECRET))  // without secret -> unsigned cookies, with scret -> signed cookies
 
 // api routes
 app.use(`/api/auth`, require('./route/authRoute'))
+app.use(`/api/user`, require('./route/userRoute'))
 
 // default route
 app.all(`/**`, async (req,res) => {

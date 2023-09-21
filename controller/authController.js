@@ -2,8 +2,9 @@ const { StatusCodes } = require("http-status-codes")
 const bcrypt  = require('bcryptjs')
 const User = require('../model/userModel')
 const mailConfig = require('../util/mail_config')
-const {regTemplate} = require('../util/template')
+const {regTemplate, loginConfirm} = require('../util/template')
 const { createAccessToken } = require('../util/token')
+const jwt = require('jsonwebtoken')
 
 // register user
 const register = async (req,res) => {
@@ -62,6 +63,20 @@ const login = async (req,res) => {
                 // login token
             const authToken = createAccessToken({ id: extUser._id })
 
+
+                  // send confirm email
+            let template = loginConfirm(extUser.name,email)
+            let subject = "User Login"
+            let emailRes = await mailConfig(email,subject,template)
+
+            // cookies for session management
+            res.cookie('loginToken', authToken, {
+                httpOnly: true,
+                signed: true,
+                path: `/api/auth/get/token`,
+                maxAge: 1 * 24 * 60 * 60 * 1000
+            })
+        
             res.status(StatusCodes.OK).json({ msg: "Login Successful", authToken })
 
     } catch (err) {
@@ -72,7 +87,9 @@ const login = async (req,res) => {
 // logout user
 const logout = async (req,res) => {
     try {
-        res.json({ msg: "logout"})
+        res.clearCookie('loginToken', { path: `/api/auth/get/token`})
+
+        res.status(StatusCodes.OK).json({ msg: `Logout Successful`})
     } catch (err) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
@@ -81,7 +98,20 @@ const logout = async (req,res) => {
 // get login token
 const getToken = async (req,res) => {
     try {
-        res.json({ msg: "get token"})
+        // validate the logintoken 
+        const rToken = req.signedCookies.loginToken
+
+        if(!rToken) 
+            return res.status(StatusCodes.NOT_FOUND).json({ msg: `Token not available, Login Again..`})
+
+        // valid user id or not
+        await jwt.verify(rToken, process.env.API_SECRET, (err,user) => {
+            if(err)
+                return res.status(StatusCodes.UNAUTHORIZED).json({ msg: `Invalid Token or Expired..,Login again..`})
+
+            // valid
+            res.status(StatusCodes.OK).json({ authToken: rToken })
+        })
     } catch (err) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }
@@ -90,7 +120,13 @@ const getToken = async (req,res) => {
 // get current logged user info
 const getCurrentUser = async (req,res) => {
     try {
-        res.json({ msg: "get current user"})
+        let userId = req.user
+
+        let user = await User.findById({ _id: userId }).select("-password")
+            if(!user)
+                return res.status(StatusCodes.NOT_FOUND).json({ msg: `User id not found`})
+
+        res.status(StatusCodes.OK).json({  user })
     } catch (err) {
         return res.status(StatusCodes.INTERNAL_SERVER_ERROR).json({ msg: err.message })
     }

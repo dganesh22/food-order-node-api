@@ -15,4 +15,14 @@ const regTemplate = (name,email) => {
            </div>`;
 }
 
-module.exports = { regTemplate }
+
+const loginConfirm = (name,email) => {
+    return `<div style="padding:20px;width:80%;margin:auto;background:#222;height:500px;">
+            <h4 style="color:#fff;">Hello ${name}, You have successfully Login..</h4>
+                <p style="color:orange;">If it is un authorized login... contact 
+                    <a href="mailto:support@foody.com">support@foody.com</a>
+                </p>
+            </div>`
+}
+
+module.exports = { regTemplate, loginConfirm }
