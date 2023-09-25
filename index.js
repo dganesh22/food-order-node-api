@@ -21,6 +21,7 @@ app.use(cookieParser(process.env.API_SECRET))  // without secret -> unsigned coo
 app.use(`/api/auth`, require('./route/authRoute'))
 app.use(`/api/user`, require('./route/userRoute'))
 app.use(`/api/category`, require('./route/categoryRoute'))
+app.use(`/api/food`, require('./route/foodRoute'))
 
 // default route
 app.all(`/**`, async (req,res) => {
