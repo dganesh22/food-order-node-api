@@ -1,10 +1,13 @@
 const { StatusCodes } = require('http-status-codes')
 const Order = require('../model/orderModel')
+const { deliveryStatus, orderTemplate } = require('../util/template')
 
 
 const add = async (req,res) => {
     try {
+        let {items, user , amount } = req.body 
          let newOrder = await Order.create(req.body)
+
 
         res.status(StatusCodes.OK).json({ msg: "order genereated successfully", order: newOrder })
     } catch (err) {
