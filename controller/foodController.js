@@ -6,7 +6,13 @@ const create = async (req,res) => {
         let vId = req.body.vendor
 
         let foods = await Food.find()
-        let sortFoods = foods.filter(item => item.vendor === vId)
+        
+        let sortFoods = foods.filter(item => item.vendor == vId)
+
+        let extTitle = sortFoods.find((item) => item.title === req.body.title)
+            if(extTitle)
+                return res.status(StatusCodes.FORBIDDEN).json({ msg: `Food title already exists.`})
+            
 
          await Food.create(req.body)
             res.status(StatusCodes.CREATED).json({ msg: "New Food details created"})
