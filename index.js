@@ -18,7 +18,7 @@ app.use(cors())
 app.use(cookieParser(process.env.API_SECRET))  // without secret -> unsigned cookies, with scret -> signed cookies
 
 // index (home) route
-app.use(`/`, async (req,res) => {
+app.get(`/`, async (req,res) => {
     res.status(StatusCodes.OK).json({ msg: "Welcome to Food Order API"})
 })
 
