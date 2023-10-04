@@ -4,6 +4,7 @@ require('dotenv').config()
 const cors = require('cors')
 const cookieParser = require('cookie-parser')
 const { StatusCodes } = require("http-status-codes")
+const fileUpload = require('express-fileupload')
 
 const connectDb = require('./db/connect')
 const PORT = process.env.PORT
@@ -16,6 +17,9 @@ app.use(express.json())
 
 app.use(cors())
 app.use(cookieParser(process.env.API_SECRET))  // without secret -> unsigned cookies, with scret -> signed cookies
+app.use(fileUpload({
+    useTempFiles: true
+}))
 
 // index (home) route
 app.get(`/`, async (req,res) => {
@@ -28,6 +32,7 @@ app.use(`/api/user`, require('./route/userRoute'))
 app.use(`/api/category`, require('./route/categoryRoute'))
 app.use(`/api/food`, require('./route/foodRoute'))
 app.use(`/api/order`, require('./route/orderRoute'))
+app.use(`/api/image`, require('./route/imageRoute'))
 
 // default route - requested path not exists.
 app.all(`/**`, async (req,res) => {
